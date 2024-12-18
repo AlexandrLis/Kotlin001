@@ -1,83 +1,157 @@
 fun main() {
 
-    phoneBook()
+    var person = Person("","","")
+    readCommand(person)
+
 }
 
-fun phoneBook(){
+
+data class Person(var name: String, var phone: String, var email: String)
+
+sealed interface Command{
+    fun doing()
+    fun isValid(value1: Regex, value2: String): Boolean{
+        if(value1.containsMatchIn(value2)){
+            return true
+        }
+        return false
+    }
+}
+
+fun readCommand(person: Person): Command{
     println("""
                 Выберите действие:
-                1 - выход
-                2 - справка
-                3 - добавить имя и номер телефона
-                4 - добавить имя и адрес электронной почты
+                1 - exit
+                2 - help
+                3 - add new abonent
+                4 - show
             """)
     var choise: String? = readlnOrNull()
-    when(choise){
-        "1" -> return
-        "2" -> information()
-        "3" -> addNumber()
-        "4" -> addemail()
-        else -> phoneBook()
-    }
-}
-
-fun information(){
-    println("""
-        Здравствуйте! Вы находитесь в телефонной книге.
-        Тут вы можете добавить имя и номер телефона нового 
-        адресата или имя и адрес электронной почты нового
-        адресата
-        """)
-    phoneBook()
-}
-
-fun addNumber(){
-    println("Введите имя нового абонента:")
-    var name: String? = readlnOrNull()
-    var regexName = "^[a-z]+$|^[а-я]+$".toRegex(RegexOption.IGNORE_CASE)
-
-    println("Введите номер телефона нового абонента:")
-    var phone: String? = readlnOrNull()
-    var regexPhone = "^[+][0-9]+$|^[0-9]+$".toRegex()
-
-    if(name != null && phone != null){
-        if(regexName.containsMatchIn(name) && regexPhone.containsMatchIn(phone)){
-            println("Абонент $name с номером телефона $phone добавлен")
-            phoneBook()
-        }else{
-            println("При добавлении нового абонента возникла ошибка")
-            println("Попробуйте добавить абонента снова")
-            phoneBook()
-        }
+    if(choise.equals("1")){
+        EndClass().doing()
+        return EndClass()
+    }else if(choise.equals("2")){
+        Information(person).doing()
+        return Information(person)
+    }else if(choise.equals("3")){
+        AddAbonent(person).doing()
+        return AddAbonent(person)
+    }else if(choise.equals("4")){
+        Show(person).doing()
+        return Show(person)
     }else{
-        println("При добавлении нового абонента возникла ошибка")
-        println("Попробуйте добавить абонента снова")
-        phoneBook()
+        readCommand(person)
+        return readCommand(person)
     }
 }
 
-fun addemail(){
-    println("Введите имя нового абонента:")
-    var name: String? = readlnOrNull()
-    var regexName = "^[a-z]+$|^[а-я]+$".toRegex(RegexOption.IGNORE_CASE)
+class Show(var person: Person) : Command{
 
-    println("Введите адрес электронной почты нового абонента:")
-    var email: String? = readlnOrNull()
-    var regexemail = "\\b[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}\\b".toRegex(RegexOption.IGNORE_CASE)
 
-    if(name != null && email != null){
-        if(regexName.containsMatchIn(name) && regexemail.containsMatchIn(email)){
-            println("Абонент $name с адресом электронной почты $email добавлен")
-            phoneBook()
+    override fun doing(){
+        if((person.name == "" && person.phone == "") || person.name == "" && person.email == ""){
+            println("Not initialized")
         }else{
-            println("При добавлении нового абонента возникла ошибка")
-            println("Попробуйте добавить абонента снова")
-            phoneBook()
+            println("Крайний добавленный абонент:")
+            println(person)
         }
-    }else{
-        println("При добавлении нового абонента возникла ошибка")
-        println("Попробуйте добавить абонента снова")
-        phoneBook()
+        readCommand(person)
     }
 }
+
+class EndClass : Command{
+    override fun doing(){
+        println("До свидания!")
+        return
+    }
+}
+
+
+class Information(var person: Person) : Command{
+    override fun doing() {
+        println("""
+                Здравствуйте! Вы находитесь в телефонной книге.
+                Тут вы можете добавить имя и номер телефона нового 
+                адресата или имя и адрес электронной почты нового
+                адресата
+                -При добавлении имени абонента используйте только 
+                буквы!
+                -При добавлении номера телефона используйте только
+                цифры от 0 до 9 или символ + ("плюс") перед номером
+                телефона
+                -При добавлении адреса электронной почты не забудьте
+                использовать символ @ ("собака") и символ . ("точка")
+            """)
+        readCommand(person)
+    }
+}
+
+class AddAbonent(var person: Person) : Command{
+
+    override fun doing() {
+        println("""
+                Введите данные нового абонента в соответствии с шаблоном
+                add <Имя> phone <Номер телефона> 
+                или
+                add <Имя> email <Адрес электронной почты>:
+            """
+        )
+        var abonent: String? = readlnOrNull()
+        if (abonent != null) {
+            var arrayAbonent = abonent.split(" ")
+            if (arrayAbonent.size != 4) {
+                println(
+                    """
+                    ПРИ ДОБАВЛЕНИИ НОВОГО АБОНЕНТА ВОЗНИКЛА ОШИБКА!!!
+                    ПОПРОБУЙТЕ СНОВА
+                """
+                )
+                readCommand(person)
+            }
+
+            var name: String = arrayAbonent[1]
+            var secondAbonentParametr: String = arrayAbonent[3]
+
+
+            var regexName = "^[a-z]+$|^[а-я]+$".toRegex(RegexOption.IGNORE_CASE)
+            var regexPhone = "^[+][0-9]+$|^[0-9]+$".toRegex()
+            var regexemail = "\\b[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,4}\\b".toRegex(RegexOption.IGNORE_CASE)
+
+
+
+            when{
+                isValid(regexName,name) && isValid(regexPhone,secondAbonentParametr) -> {
+                    println("Абонент $name с номером телефона $secondAbonentParametr добавлен")
+                    person.name = name
+                    person.phone = secondAbonentParametr
+                    person.email = ""
+                    readCommand(person)
+                }
+                isValid(regexName,name) && isValid(regexemail,secondAbonentParametr) -> {
+                    println("Абонент $name с адресом электронной почты $secondAbonentParametr добавлен")
+                    person.name = name
+                    person.email = secondAbonentParametr
+                    person.phone = ""
+                    readCommand(person)
+                }
+                else -> {
+                    Information(person).doing()
+                    readCommand(person)
+                }
+
+            }
+
+        } else {
+            Information(person).doing()
+            readCommand(person)
+        }
+    }
+}
+
+
+
+
+
+
+
 
